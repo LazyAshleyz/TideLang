@@ -1,3 +1,4 @@
+
 use crate::ast;
 use crate::interpreter::Interpreter;
 use crate::lexer::{Lexer, Token};
@@ -6,6 +7,7 @@ use crate::parser::Parser;
 use std::fs;
 use std::process;
 use std::fs::File;
+use std::io::Write;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -95,15 +97,38 @@ pub fn run(args: &[String]) {
         "--version" | "-V" => {
             println!("wave {}", VERSION);
         }
+
         "init" => {
             println!("Initializing a new Tide project...");
 
             fs::create_dir_all("src").unwrap();
 
-            File::create_new("Tide.toml")
+            let mut config = File::create_new("Tide.toml")
                 .expect("Tide.toml already exists or couldn't be created");
-            File::create_new("src/main.td")
+
+            config.write_all(br#"
+[project]
+name = "MyProject"
+version = "1.0.0"
+authors = ["Ashley", "Twlve"]
+description = "A project written in Tide"
+
+[language]
+version = "1.0"
+entry = "src/main.td"
+
+[build]
+mode = "interpreted" # interpreted | compiled
+output = "build/"
+
+[compiler]
+target = "native"
+"#).expect("Failed to write Tide.toml");
+
+            let mut main = File::create_new("src/main.td")
                 .expect("src/main.td already exists or couldn't be created");
+
+            main.write_all(b"print(\"Hello, World!\");").expect("Failed to write main.td");
 
             println!("Created Tide.toml and src/main.td");
         }
